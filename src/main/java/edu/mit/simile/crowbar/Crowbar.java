@@ -12,7 +12,7 @@ import org.mozilla.xpcom.nsIWindowWatcher;
 
 public class Crowbar {
 
-    static Mozilla initMozilla() throws Exception {
+    static Mozilla initMozilla(File app) throws Exception {
         Mozilla mozilla = Mozilla.getInstance();
         try {
             GREVersionRange[] range = new GREVersionRange[1];
@@ -20,7 +20,7 @@ public class Crowbar {
 
             File grePath = Mozilla.getGREPathWithProperties(range, null);
             System.out.println("GRE: " + grePath);
-            LocationProvider locProvider = new LocationProvider(grePath);
+            LocationProvider locProvider = new LocationProvider(app, grePath);
             mozilla.initXPCOM(grePath, locProvider);
         } catch (Exception e) {
             e.printStackTrace();
@@ -30,7 +30,7 @@ public class Crowbar {
     }
 
     public static void main(String args[]) throws Exception {
-        Mozilla moz = initMozilla();
+        Mozilla moz = initMozilla(new File("."));
     
         // Now we need to start an XUL application, so we get an instance of the XPCOM service manager
         nsIServiceManager serviceManager = moz.getServiceManager();

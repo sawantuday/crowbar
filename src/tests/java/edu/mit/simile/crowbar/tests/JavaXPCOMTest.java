@@ -21,7 +21,7 @@ public abstract class JavaXPCOMTest extends TestCase {
 
             File grePath = Mozilla.getGREPathWithProperties(range, null);
             System.out.println("GRE: " + grePath);
-            LocationProvider locProvider = new LocationProvider(grePath);
+            LocationProvider locProvider = new LocationProvider(new File("."), grePath);
             mozilla.initXPCOM(grePath, locProvider);
         } catch (Exception e) {
             e.printStackTrace();

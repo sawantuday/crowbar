@@ -7,45 +7,48 @@ import org.mozilla.xpcom.IAppFileLocProvider;
 
 public class LocationProvider implements IAppFileLocProvider {
 
-    File libXULPath;
+    File _app;
+    File _gre;
 
-    public LocationProvider(File aBinPath) throws FileNotFoundException {
-        libXULPath = aBinPath;
-        if (!libXULPath.exists() || !libXULPath.isDirectory())
-            throw new FileNotFoundException("libxul directory specified is not valid: " + libXULPath.getAbsolutePath());
+    public LocationProvider(File app, File gre) throws FileNotFoundException {
+        if (!app.exists() || !app.isDirectory()) {
+            throw new FileNotFoundException("The specified application directory is not valid: " + app.getAbsolutePath());
+        } else {
+            _app = app;
+        }
+        if (!gre.exists() || !gre.isDirectory()) { 
+            throw new FileNotFoundException("The specified XULRunner directory is not valid: " + gre.getAbsolutePath());
+        } else {
+            _gre = gre;
+        }
     }
 
-    public File getFile(String aProp, boolean[] aPersistent) {
+    public File getFile(String p, boolean[] aPersistent) {
+        System.out.println("[LocationProvider.getFile()] get " + p);
         File file = null;
-        if (aProp.equals("GreD") || aProp.equals("GreComsD")) { //$NON-NLS-1$
-        // file = new File(grePath);
-            file = libXULPath;
-            if (aProp.equals("GreComsD")) { //$NON-NLS-1$
-                file = new File(file, "components"); //$NON-NLS-1$
-            }
-        } else if (aProp.equals("MozBinD") || //$NON-NLS-1$
-                aProp.equals("CurProcD") || //$NON-NLS-1$
-                aProp.equals("ComsD") || //$NON-NLS-1$
-                aProp.equals("ProfD")) //$NON-NLS-1$
-        {
-            file = libXULPath;
-            if (aProp.equals("ComsD")) { //$NON-NLS-1$
-                file = new File(file, "components"); //$NON-NLS-1$
-            }
-//      } else {
-//          System.err.println("LocationProvider::getFile() => unhandled property = " + aProp);
+        if (p.equals("GreD") || p.equals("MozBinD") || p.equals("CurProcD") || p.equals("ProfD")) {
+            file = _gre;
+        } else if (p.equals("GreComsD") || p.equals("ComsD")) {
+            file = new File(file, "components");
+        } else {
+            System.err.println("[LocationProvider.getFile()] unhandled property = " + p);
         }
 
         return file;
     }
 
-    public File[] getFiles(String aProp) {
+    public File[] getFiles(String p) {
+        System.out.println("[LocationProvider.getFiles()] get " + p);
         File[] files = null;
-        if (aProp.equals("APluginsDL")) { //$NON-NLS-1$
+        if (p.equals("APluginsDL")) {
             files = new File[1];
-            files[0] = new File(libXULPath, "plugins");
-//      } else {
-//          System.err.println("LocationProvider::getFiles() => unhandled property = " + aProp);
+            files[0] = new File(_gre, "plugins");
+        } if (p.equals("ComsDL")) {
+            files = new File[2];
+            files[0] = _app;
+            files[1] = _gre;
+        } else {
+            System.err.println("[LocationProvider.getFiles()] unhandled property = " + p);
         }
 
         return files;
