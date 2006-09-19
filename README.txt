@@ -54,11 +54,6 @@
   
     http://ftp.mozilla.org/pub/mozilla.org/xulrunner/nightly/latest-mozilla1.8.0/
 
-  Then you need the SWT library for your operating system. Read
-  
-    http://www.eclipse.or/swt/eclipse.php
-    
-  for how to do it.
   
   
   Why such a complicated design?

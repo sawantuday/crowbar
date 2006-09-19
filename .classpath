@@ -3,8 +3,7 @@
 	<classpathentry kind="src" path="src/main/java"/>
 	<classpathentry kind="src" path="src/tests/java"/>
 	<classpathentry sourcepath="JRE_SRC" kind="var" path="JRE_LIB"/>
-	<classpathentry sourcepath="/Library/Frameworks/XUL.framework/Versions/1.8.0.1/sdk/lib/MozillaInterfaces-src.jar" kind="lib" path="lib/org.mozilla.xpcom_1.8.0.1.jar"/>
+	<classpathentry sourcepath="lib/org.mozilla.xpcom_1.8.0.1-src.jar" kind="lib" path="lib/org.mozilla.xpcom_1.8.0.1.jar"/>
 	<classpathentry kind="lib" path="lib/junit-3.8.1.jar"/>
-	<classpathentry combineaccessrules="false" kind="src" path="/org.eclipse.swt"/>
 	<classpathentry kind="output" path="build/classes"/>
 </classpath>
