@@ -4,20 +4,10 @@
 
 <!DOCTYPE window SYSTEM "chrome://crowbar/locale/crowbar.dtd">
 
-<window
-  id     = "crowbar"
-  title  = "&crowbar.title;"
-  width  = "800"
-  height = "600"
-  xmlns  = "http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
+<window id="crowbar" title="&crowbar.title;" xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
   <script src="crowbar.js"/>
   <hbox>
     <textbox id="urlbar" value="" flex="1" onchange="go();"/>
   </hbox>
   <browser flex="1" id="browser" src="" type="content-primary"/>
-  <statusbar>
-    <statusbarpanel id="status" label="" crop="end" flex="1"/>
-    <progressmeter id="progress" mode="determined" value="0%" style="display: none"/>
-    <statusbarpanel id="security" label="" style="display: none"/>
-  </statusbar>
 </window>

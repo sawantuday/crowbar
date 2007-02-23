@@ -1,15 +1,13 @@
 
-// nsIWebProgressListener implementation to monitor activity in the browser.
-function WebProgressListener() {
-}
+function WebProgressListener() {}
 
 WebProgressListener.prototype = {
-  _requestsStarted: 0,
-  _requestsFinished: 0,
+  _done : null,
 
-  // We need to advertize that we support weak references.  This is done simply
-  // by saying that we QI to nsISupportsWeakReference.  XPConnect will take
-  // care of actually implementing that interface on our behalf.
+  setDone: function(done) {
+    this._done = done;
+  }, 
+  
   QueryInterface: function(iid) {
     if (iid.equals(Components.interfaces.nsIWebProgressListener) ||
         iid.equals(Components.interfaces.nsISupportsWeakReference) ||
@@ -19,147 +17,144 @@ WebProgressListener.prototype = {
     throw Components.results.NS_ERROR_NO_INTERFACE;
   },
 
-  // This method is called to indicate state changes.
   onStateChange: function(webProgress, request, stateFlags, status) {
     const WPL = Components.interfaces.nsIWebProgressListener;
-
-    var progress = document.getElementById("progress");
-
-    if (stateFlags & WPL.STATE_IS_REQUEST) {
-      if (stateFlags & WPL.STATE_START) {
-        this._requestsStarted++;
-      } else if (stateFlags & WPL.STATE_STOP) {
-        this._requestsFinished++;
-      }
-      if (this._requestsStarted > 1) {
-        var value = (100 * this._requestsFinished) / this._requestsStarted;
-        progress.setAttribute("mode", "determined");
-        progress.setAttribute("value", value + "%");
-      }
-    }
-
+    
     if (stateFlags & WPL.STATE_IS_NETWORK) {
-      if (stateFlags & WPL.STATE_START) {
-        progress.setAttribute("style", "");
-      } else if (stateFlags & WPL.STATE_STOP) {
-        progress.setAttribute("style", "display: none");
-        this.onStatusChange(webProgress, request, 0, "Done");
-        this._requestsStarted = this._requestsFinished = 0;
-      }
+        if (stateFlags & WPL.STATE_STOP) {
+            this._done();
+        }
     }
   },
 
-  // This method is called to indicate progress changes for the currently loading page.
-  onProgressChange: function(webProgress, request, curSelf, maxSelf, curTotal, maxTotal) {
-    if (this._requestsStarted == 1) {
-      var progress = document.getElementById("progress");
-      if (maxSelf == -1) {
-        progress.setAttribute("mode", "undetermined");
-      } else {
-        progress.setAttribute("mode", "determined");
-        progress.setAttribute("value", ((100 * curSelf) / maxSelf) + "%");
-      }
-    }
-  },
-
-  // This method is called to indicate a change to the current location.
   onLocationChange: function(webProgress, request, location) {
     var urlbar = document.getElementById("urlbar");
     urlbar.value = location.spec;
   },
 
-  // This method is called to indicate a status changes for the currently
-  // loading page.  The message is already formatted for display.
-  onStatusChange: function(webProgress, request, status, message) {
-    var statusEl = document.getElementById("status");
-    statusEl.setAttribute("label", message);
+  onProgressChange: function(webProgress, request, curSelf, maxSelf, curTotal, maxTotal) {
   },
 
-  // This method is called when the security state of the browser changes.
+  onStatusChange: function(webProgress, request, status, message) {
+  },
+
   onSecurityChange: function(webProgress, request, state) {
-    const WPL = Components.interfaces.nsIWebProgressListener;
-
-    var sec = document.getElementById("security");
-
-    if (state & WPL.STATE_IS_INSECURE) {
-      sec.setAttribute("style", "display: none");
-    } else {
-      var level = "unknown";
-      if (state & WPL.STATE_IS_SECURE) {
-        if (state & WPL.STATE_SECURE_HIGH)
-          level = "high";
-        else if (state & WPL.STATE_SECURE_MED)
-          level = "medium";
-        else if (state & WPL.STATE_SECURE_LOW)
-          level = "low";
-      } else if (state & WPL_STATE_IS_BROKEN) {
-        level = "mixed";
-      }
-      sec.setAttribute("label", "Security: " + level);
-      sec.setAttribute("style", "");
-    }
   }
 };
 
-// nsIServerSocketListener implementation to monitor activity in the browser.
-function SocketListener() {
-}
+function SocketListener() {}
 
 SocketListener.prototype = {
 
   onStopListening: function(serv, status) {
     // nothing to do here
   },
-    // called after connection established  onSocketAccepted: function(serv, transport) {    try {      var outstream = transport.openOutputStream(0,0,0);      var stream = transport.openInputStream(0,0,0);      var instream = Components.classes["@mozilla.org/scriptableinputstream;1"].createInstance(Components.interfaces.nsIScriptableInputStream);      instream.init(stream);    } catch (e) {      alert("Error " + e);    }    var dataListener = {      data : "",      return_count : 0,      found_get : 0,
-      found_post : 0,       onStartRequest: function(request, context){ },      onStopRequest: function(request, context, status) {        instream.close();        outstream.close();      },      // called when there are new data      onDataAvailable: function(request, context, inputStream, offset, count) {        this.data = instream.read(count);        if (this.data.match(/GET/)) {          this.found_get++;        } else if (this.data.match(/POST/)) {          this.found_post++;
-        }        var re = RegExp("[\n\r]{2}");        if (this.data.match(re)) {         this.return_count++;         if (this.return_count > 0) {
-            var body_header = "<html><head><title>Crowbar</title></head><body>";
-            var body_footer = "</body></html>\n";
-            var form = "<form action='' method='POST'><input type='text' name='url'/><input type='submit' value='Go'/></form>";
-            var headers = "HTTP/1.0 200 OK\nContent-type: text/html\n\n";
-            if (this.found_get) {
-                dump("GET request");
-                var body = body_header + form + body_footer;
-            } else if (this.found_post) {
-                dump("POST request");
-                var url = "http://simile.mit.edu/";
-                var browser = document.getElementById("browser");
-                browser.loadURI(url, null, null);
-                var body = body_header + form + "<h1>done!</h1>" + body_footer;
-            } else {
-                var headers = "HTTP/1.0 500 OK\n\n";
-                var body = "";
+    onSocketAccepted: function(serv, transport) {    try {        var outstream = transport.openOutputStream(0,0,0);        var stream = transport.openInputStream(0,0,0);        var instream = Components.classes["@mozilla.org/scriptableinputstream;1"].createInstance(Components.interfaces.nsIScriptableInputStream);        instream.init(stream);    } catch (e) {        jsdump("Error " + e);    }    var dataListener = {        data : "",        found_get : 0,
+        found_post : 0,         onStartRequest: function(request, context){ },        onStopRequest: function(request, context, status) {            instream.close();            outstream.close();        },        onDataAvailable: function(request, context, inputStream, offset, count) {            this.data = instream.read(count);
+    
+            if (this.data.match(/GET/)) {                this.found_get++;            } else if (this.data.match(/POST/)) {                this.found_post++;
             }
-            
-            var webpage = headers + body;
-            outstream.write(webpage, webpage.length);            instream.close();            outstream.close();
-          }        }      }    };    // pump takes in data in chunks asynchronously    var pump = Components.classes["@mozilla.org/network/input-stream-pump;1"].createInstance(Components.interfaces.nsIInputStreamPump);    pump.init(stream, -1, -1, 0, 0, false);    pump.asyncRead(dataListener,null);  }};
+    
+            if (this.data.match(/[\n\r]{2}/)) {                // these string fragments are horrible, we should think of using a sort of template system
+                var body_header = "<html>"+
+                  "<head><title>Crowbar</title>" +
+                    "<style>" +
+                      "html { height: 100% }" +
+                      "input { border: 1px solid #ccc; padding: 0.2em 0.4em; }" +
+                      "input#url { width: 40em; margin-right: 1em; }" +
+                      "textarea { border: 1px solid #ccc; background-color: #f0f0f0; }" +
+                    "</style>" +
+                    "<link rel='stylesheet' type='text/css' href='http://simile.mit.edu/styles/default.css'/>" + 
+                  "</head><body><div id='body'><h1>Crowbar</h1>";
+                var body_footer = "</div></body></html>\n";
+                var headers = "HTTP/1.0 200 OK\nContent-type: text/html\n\n";
 
-var port = 10000;
+                if (this.found_get) {
+                    // process a GET request
+                    var body = body_header + getForm() + body_footer;
+                    var webpage = headers + body;
+                    outstream.write(webpage, webpage.length);                    instream.close();                    outstream.close();
+                } else if (this.found_post) {
+                    // process a POST request
+                    var params = parsePost(this.data)
+                    var url = params.url;
+    
+                    if (url && url.match(/^http\:\/\/.*$/)) {
+                        var progessListener = new WebProgressListener();
+                        var browser = document.getElementById("browser");
+                        var page;
+                    
+                        var serialize = function() {
+                            var serializer = new XMLSerializer();                            page = serializer.serializeToString(browser.contentDocument);
+                            browser.removeProgressListener(progessListener);
+                            var body = body_header + getForm(url) + "<textarea cols='100' rows='40'>" + page + "</textarea>" + body_footer;
+                            var webpage = headers + body
+                            outstream.write(webpage, webpage.length);                            instream.close();                            outstream.close();
+                        }
+                        var done = function() {
+                            // wait a few seconds for the page to finish loading
+                            setTimeout(serialize, 3000);
+                        }
+                        progessListener.setDone(done);
+                        
+                        browser.addProgressListener(progessListener, Components.interfaces.nsIWebProgress.NOTIFY_ALL);
+                        browser.loadURI(url, null, null);
+                    } else {
+                        var headers = "HTTP/1.0 400 OK\n\n";
+                        var body = body_header + getForm() + "<h1>" + url + " is not a valid HTTP URL</h1>" + body_footer;
+                        var webpage = headers + body
+                        outstream.write(webpage, webpage.length);                        instream.close();                        outstream.close();
+                    }
+                } else {
+                    var headers = "HTTP/1.0 405 OK\n\n";
+                    var body = body_header + getForm() + "<h1>Crowbar supports only GET or POST methods</h1>" + body_footer;
+                    var webpage = headers + body
+                    outstream.write(webpage, webpage.length);                    instream.close();                    outstream.close();
+                }
+            }        }    };    var pump = Components.classes["@mozilla.org/network/input-stream-pump;1"].createInstance(Components.interfaces.nsIInputStreamPump);    pump.init(stream, -1, -1, 0, 0, false);    pump.asyncRead(dataListener,null);  }};
 
-var progessListener;
-var serverSocket;
-var socketListener;
+function parsePost(data) {
+    var splits = data.split(/[\n\r]{2}/);
+    var payload = splits[splits.length - 1];
+    var params = {};
+    var tokens = payload.split("&");
+    for (var i = 0; i < tokens.length; i++) {
+        var token = tokens[i];
+        var param = token.split("=");
+        var name = param[0];
+        var value = decodeURIComponent(param[1]);
+        params[name] = value;
+    }
+    return params;
+}
+
+function getForm(url) {
+    if (!url) url = "http://simile.mit.edu/crowbar/test.html";
+    return "<form action='' method='POST'><input id='url' type='text' name='url' value='" + url + "'/><input id='fetch' type='submit' value='Fetch'/></form>";
+}
 
 function showConsole() {
     window.open("chrome://global/content/console.xul", "_blank", "chrome,extrachrome,menubar,resizable,scrollbars,status,toolbar");
 }
 
+// we should make the port configurable
+var port = 10000;
+
+var serverSocket;
+var socketListener;
+
 function onLoad() {
-    showConsole();
+    //showConsole();
     
-    progessListener = new WebProgressListener();
     socketListener = new SocketListener();
-    
-    var browser = document.getElementById("browser");
-    browser.addProgressListener(progessListener, Components.interfaces.nsIWebProgress.NOTIFY_ALL);
-    
     serverSocket = Components.classes["@mozilla.org/network/server-socket;1"].createInstance(Components.interfaces.nsIServerSocket);    serverSocket.init(port,false,-1);    serverSocket.asyncListen(socketListener);
 }
 
 function onUnload() {
     serverSocket.close()
 }
+
+function jsdump(str) {    Components.classes['@mozilla.org/consoleservice;1'].getService(Components.interfaces.nsIConsoleService).logStringMessage(str);}
 
 window.addEventListener("load", onLoad, false);
 window.addEventListener("unload", onUnload, false);
