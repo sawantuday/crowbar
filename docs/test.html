@@ -1,9 +1,13 @@
 <html>
  <head>
-  <script>document.getElementById("message").innerHTML("Hi Crowbar!");</script> 
+  <script>
+    function init() {
+        document.getElementById("message").innerHTML = "Hi Crowbar!";
+    }
+  </script> 
  </head>
- <body>
-  <h1 id="body">Hi lame crawler</h1>
+ <body onload="init()">
+  <h1 id="message">Hi lame crawler</h1>
  </body>
 </html>
  
