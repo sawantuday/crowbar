@@ -105,7 +105,7 @@
   Licensing and legal issues
   --------------------------
 
-  Banach is open source software and are licensed under the BSD license
+  Crowbar is open source software and are licensed under the BSD license
   located in the LICENSE.txt file located in the same directory as this very file
   you are reading.
 
