@@ -36,7 +36,7 @@ WebProgressListener.prototype = {
 	onSecurityChange: function(webProgress, request, state) {}
 };
 
-function SocketListener() {};
+function SocketListener() {}
 
 SocketListener.prototype = {
 	onStopListening: function(serv, status) {
@@ -178,7 +178,7 @@ SocketListener.prototype = {
 									instream.close();
 									outstream.close();
 								};
-									var done = function() {
+								var done = function() {
 									// wait for the page to finish loading
 									setTimeout(respond, delay);
 									// FIXME(SM): instead of using a delay, we should find a way to securely intercept
@@ -187,7 +187,7 @@ SocketListener.prototype = {
 									// as well) but it's better than nothing. We should take a look at how Greasemonkey 
 									// works in this regard.
 								};
-									progessListener.setDone(done);
+								progessListener.setDone(done);
 								browser.addProgressListener(progessListener, Components.interfaces.nsIWebProgress.NOTIFY_ALL);
 								browser.loadURI(url, null, null);
 							} else {
