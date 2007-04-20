@@ -273,17 +273,15 @@ function showConsole() {
     window.open("chrome://global/content/console.xul", "_blank", "chrome,extrachrome,menubar,resizable,scrollbars,status,toolbar");
 }
 
-// FIXME(SM): we should make the port configurable
-var port = 10000;
-
-var default_delay = 3000;
+var port = 10000;         // this value can be modified from the command line when starting crowbar
+var default_delay = 3000; // this value can be modified when invoking the action from the web service directly
 
 var serverSocket;
 var socketListener;
 
 function onLoad() {
     showConsole();
-    
+    processCommandLineArgs();    
     socketListener = new SocketListener();
     serverSocket = Components.classes["@mozilla.org/network/server-socket;1"].createInstance(Components.interfaces.nsIServerSocket);
     serverSocket.init(port,false,-1);
@@ -297,6 +295,9 @@ function onUnload() {
 function jsdump(str) {
     Components.classes['@mozilla.org/consoleservice;1'].getService(Components.interfaces.nsIConsoleService).logStringMessage(str);
 }
+
+/* * Process a series of command line arguments and modify default settings */function processCommandLineArgs() {
+    var nsCommandLine = window.arguments[0];    nsCommandLine = nsCommandLine.QueryInterface(Components.interfaces.nsICommandLine);    port = getCommandLineArg(nsCommandLine, 'port', port);}/* * Attempt to retrieve a parameter from the command line in the form of: * -flagString param / --flagString=param / Win: /flagString:param */function getCommandLineArg(iface, flagString, defaultValue, caseSensitive) {    if (defaultValue == undefined) defaultValue = null;    if (caseSensitive == undefined) caseSensitive = false;    try {        var ret = iface.handleFlagWithParam(flagString, caseSensitive);        return (ret != null) ? ret : defaultValue;    } catch (e) {        jsdump("Error retrieving parameter " + e);    }    return defaultValue;}
 
 window.addEventListener("load", onLoad, false);
 window.addEventListener("unload", onUnload, false);
