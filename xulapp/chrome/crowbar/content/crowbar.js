@@ -105,7 +105,7 @@ SocketListener.prototype = {
                             instream.close();
                             outstream.close();
                         } else {
-                            if (params.url.match(/^http\:\/\/.*$/)) {
+                            if (params.url.match(/^https?\:\/\/.*$/)) {
                                 var progessListener = new WebProgressListener();
                                 var browser = document.getElementById("browser");
                                 var page;
