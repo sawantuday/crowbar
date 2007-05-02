@@ -5,6 +5,22 @@
 <!DOCTYPE window SYSTEM "chrome://crowbar/locale/crowbar.dtd">
 
 <window id="crowbar" title="&crowbar.title;" xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
+  <script src="uri.js"/>
+  <script src="term.js"/>
+  <script src="rdfparser.js"/>
+
+  <script src="debug.js"/>
+  <script src="io.js"/>
+  <script src="http.js"/>
+
+  <script src="store.js"/>
+  <script src="extension.js"/>
+  <script src="data.js"/>
+  <script src="piggybank-interface.js"/>
+  <script src="scraping-utilities.js"/>
+  <script src="piggybank.js"/>
+  <script src="scrape.js"/>
+
   <script src="crowbar.js"/>
   <hbox>
     <textbox id="urlbar" value="" flex="1" onchange="go();"/>

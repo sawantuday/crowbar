@@ -143,8 +143,10 @@ SocketListener.prototype = {
 										var document = browser.contentDocument;
 										var scraper = params.scraper;
 										if (scraper && scraper.match(/^http\:\/\/.*$/)) {
-											// TODO(SM): here we should fetch and use the scraper to get the content out
-											// Make sure to look into how Piggy Bank does this since there are security concerns involved
+											var results = Scraper.scrape(document, browser, scraper);
+											code = "200";
+											mime_type = "text/rdf+n3";
+											page = results.store.toNT();
 										} else {
 											code = "400";
 											mime_type = "text/html";
