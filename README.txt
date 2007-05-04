@@ -28,9 +28,13 @@
   Licensing and legal issues
   --------------------------
 
-  Crowbar is open source software and are licensed under the BSD license
-  located in the LICENSE.txt file located in the same directory as this 
-  very file you are reading.
+  Portions of Crowbar are reused from the Tabulator project, made
+  available under the open source W3C Software License:
+  http://www.w3.org/Consortium/Legal/2002/copyright-software-20021231
+
+  The rest of Crowbar is open source software and is licensed under the
+  BSD license located in the LICENSE.txt file located in the same
+  directory as this very file you are reading.
 
 
 
