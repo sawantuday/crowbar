@@ -43,10 +43,10 @@ Scraper.scrape = function(doc, browser, scraper) {
 	// to check if the java-side loading has finished
 
 	var loader = function() {
-		if (PB_Debug.enabled()) PB_Debug.trace("collector.js","> PB_Collector.loader");
+		if (PB_Debug.enabled()) PB_Debug.trace("scrape.js","> Scraper.loader");
 
 		if (!fetching) {
-			if (PB_Debug.enabled()) PB_Debug.trace("collector.js","> PB_Collector.fetching");
+			if (PB_Debug.enabled()) PB_Debug.trace("scrape.js","> Scraper.fetching");
 			fetching = true;
 
 			// this is the triple store that is going to be filled by the screen scraper
@@ -55,33 +55,33 @@ Scraper.scrape = function(doc, browser, scraper) {
 			// the function that will fetch the data into the model
 			var fetchData = function(url, type) {
 				var onStatus = function(status, statusText, xmlhttp) {
-					if (PB_Debug.enabled()) PB_Debug.trace("collector.js","> PB_Collector.fetchData.onStatus(" + url + ")");
+					if (PB_Debug.enabled()) PB_Debug.trace("scrape.js","> Scraper.fetchData.onStatus(" + url + ")");
 					if (status != 0) {
 						alert("Fetching " + url + " return status '" + statusText + "' (" + status + ")");
 					}
-					if (PB_Debug.enabled()) PB_Debug.trace("collector.js","< PB_Collector.fetchData.onStatus(" + url + ")");
+					if (PB_Debug.enabled()) PB_Debug.trace("scrape.js","< Scraper.fetchData.onStatus(" + url + ")");
 				};
 
 				var onDone = function(responseText, xmlhttp) {
 					fetched++;
-					if (PB_Debug.enabled()) PB_Debug.trace("collector.js","> PB_Collector.fetchData.onDone(" + url + ")");
+					if (PB_Debug.enabled()) PB_Debug.trace("scrape.js","> Scraper.fetchData.onDone(" + url + ")");
 					var type = xmlhttp.getResponseHeader('Content-Type').split(';')[0];
-					if (PB_Debug.enabled()) PB_Debug.trace("collector.js","Response body: " + responseText);
+					if (PB_Debug.enabled()) PB_Debug.trace("scrape.js","Response body: " + responseText);
 					if (type == RDF_XML_MIME_TYPE) {
 						var result = model.addRDFXML(responseText, url);
 					} else if (type == RDF_N3_MIME_TYPE || type == RDF_TURTLE_MIME_TYPE || type == '') {
 						// NOTE: type '' is returned for file:/// URLs but this can happen here only for N3/turtle files
 						var result = model.addTurtle(responseText, url);
 					} else {
-						if (PB_Debug.enabled()) PB_Debug.trace("collector.js","Type '" + type + "' not recognized, trying to guess it from the URL");
+						if (PB_Debug.enabled()) PB_Debug.trace("scrape.js","Type '" + type + "' not recognized, trying to guess it from the URL");
 						if (url.match(/^.*\.(rdf|rdfs|owl)([\?\#].*)?$/)) {
-							if (PB_Debug.enabled()) PB_Debug.trace("collector.js","URL's extensions suggests RDF/XML");
+							if (PB_Debug.enabled()) PB_Debug.trace("scrape.js","URL's extensions suggests RDF/XML");
 							var result = model.addRDFXML(responseText, url);
 						} else if (url.match(/^.*\.(turtle|n3)([\?\#].*)?$/)) {
-							if (PB_Debug.enabled()) PB_Debug.trace("collector.js","URL's extensions suggests RDF/N3 or RDF/Turtle");
+							if (PB_Debug.enabled()) PB_Debug.trace("scrape.js","URL's extensions suggests RDF/N3 or RDF/Turtle");
 							var result = model.addTurtle(responseText, url);
 						} else {
-							if (PB_Debug.enabled()) PB_Debug.trace("collector.js","URL '" + url + "' doesn't end with extensions we recognize, so aborting");
+							if (PB_Debug.enabled()) PB_Debug.trace("scrape.js","URL '" + url + "' doesn't end with extensions we recognize, so aborting");
 						}
 					}
 					if (result && result != "") {
@@ -89,10 +89,10 @@ Scraper.scrape = function(doc, browser, scraper) {
 					} else {
 						successfullyFetched++;
 					}
-					if (PB_Debug.enabled()) PB_Debug.trace("collector.js","< PB_Collector.fetchData.onDone(" + url + ")");
+					if (PB_Debug.enabled()) PB_Debug.trace("scrape.js","< Scraper.fetchData.onDone(" + url + ")");
 				};
 
-				if (PB_Debug.enabled()) PB_Debug.trace("collector.js","  Fetching " + url);
+				if (PB_Debug.enabled()) PB_Debug.trace("scrape.js","  Fetching " + url);
 				tofetch++;
 
 				if (url.match(/^file:\/.*$/)) {
@@ -100,15 +100,15 @@ Scraper.scrape = function(doc, browser, scraper) {
 						var str = PB_IOUtilities.getContent(url);
 						fetched++;
 						if (url.match(/^file:\/.*\.(rdf|rdfs|owl)$/)) {
-							if (PB_Debug.enabled()) PB_Debug.trace("collector.js","File's extensions suggests RDF/XML");
+							if (PB_Debug.enabled()) PB_Debug.trace("scrape.js","File's extensions suggests RDF/XML");
 							var result = model.addRDFXML(str, url);
 						} else { // default to Turtle
-							if (PB_Debug.enabled()) PB_Debug.trace("collector.js","Trying RDF/N3 or RDF/Turtle as default");
+							if (PB_Debug.enabled()) PB_Debug.trace("scrape.js","Trying RDF/N3 or RDF/Turtle as default");
 							model.addTurtle(str, url);
 						}
 						successfullyFetched++;
 					} catch (e) {
-						alert("collector.js","Error Loading '" + url + "': " + e);
+						alert("scrape.js","Error Loading '" + url + "': " + e);
 					}
 				} else {
 					PB_HTTPUtilities.doGet(url, onStatus, onDone, type);
@@ -135,7 +135,7 @@ Scraper.scrape = function(doc, browser, scraper) {
 							var links = head.getElementsByTagName("link");
 							for (var i = 0; i < links.length; i++) {
 								var link = links[i];
-								if (PB_Debug.enabled()) PB_Debug.trace("collector.js","Found <link/>: " + link.rel + " -> " + link.href + "[" + link.type + "]");
+								if (PB_Debug.enabled()) PB_Debug.trace("scrape.js","Found <link/>: " + link.rel + " -> " + link.href + "[" + link.type + "]");
 								if (link.href) {
 									if (link.type == RDF_XML_MIME_TYPE || link.type == RDF_N3_MIME_TYPE || link.type == RDF_TURTLE_MIME_TYPE) {
 										fetchData(link.href, link.type);
@@ -144,14 +144,14 @@ Scraper.scrape = function(doc, browser, scraper) {
 							}
 						}
 					} catch (e) {
-						if (PB_Debug.enabled()) PB_Debug.trace("collector.js","Error looking for <link/>: " + e);
+						if (PB_Debug.enabled()) PB_Debug.trace("scrape.js","Error looking for <link/>: " + e);
 					}
 				}
 			} else {
 				fetchData(url, contentType);
 			}
 
-			if (PB_Debug.enabled()) PB_Debug.trace("collector.js","< PB_Collector.fetching");
+			if (PB_Debug.enabled()) PB_Debug.trace("scrape.js","< Scraper.fetching");
 		}
         
 		if (model) {
@@ -159,7 +159,7 @@ Scraper.scrape = function(doc, browser, scraper) {
 				scraping = true; // indicate that we started scraping, so that we aren't called again
                 
 				var scrape = function(continuation, i) {
-					if (PB_Debug.enabled()) PB_Debug.trace("collector.js","> scrape(" + i + ")");
+					if (PB_Debug.enabled()) PB_Debug.trace("scrape.js","> scrape(" + i + ")");
 					if (i < 1) {
 						try {
 							var code = PB_IOUtilities.getContent(scraper);
@@ -185,15 +185,15 @@ Scraper.scrape = function(doc, browser, scraper) {
 						}
 					} else 
 						doneScraping = true;
-					if (PB_Debug.enabled()) PB_Debug.trace("collector.js","< scrape(" + i + ")");
+					if (PB_Debug.enabled()) PB_Debug.trace("scrape.js","< scrape(" + i + ")");
 				};
 				scrape(scrape, 0);
 			}
 		}
 
-//		if (PB_Debug.enabled()) PB_Debug.trace("collector.js","DOM available: " + this._loaded);
-//		if (PB_Debug.enabled()) PB_Debug.trace("collector.js","Fetching: " + fetching + "," + tofetch + "," + fetched + "," + successfullyFetched);
-//		if (PB_Debug.enabled()) PB_Debug.trace("collector.js","Scraping: " + scraping + "," + doneScraping + ((scrapers) ? "," + scrapers.length : ""));
+//		if (PB_Debug.enabled()) PB_Debug.trace("scrape.js","DOM available: " + this._loaded);
+//		if (PB_Debug.enabled()) PB_Debug.trace("scrape.js","Fetching: " + fetching + "," + tofetch + "," + fetched + "," + successfullyFetched);
+//		if (PB_Debug.enabled()) PB_Debug.trace("scrape.js","Scraping: " + scraping + "," + doneScraping + ((scrapers) ? "," + scrapers.length : ""));
 
 		var finished = (fetching && fetched == tofetch) && ((scraping && doneScraping) || (!scraping && !doc));
 
@@ -213,13 +213,14 @@ Scraper.scrape = function(doc, browser, scraper) {
 			}
 		}
 
-		if (PB_Debug.enabled()) PB_Debug.trace("collector.js","< PB_Collector.loader");
+		if (PB_Debug.enabled()) PB_Debug.trace("scrape.js","< Scraper.loader");
 	};
 	loader(); // invoke the loader
 	return model;
 }
 
 Scraper.executeScraperSandboxed = function(browser, scraper, model, logger, done, scraperURI, originURI, originTitle) {
+	if (PB_Debug.enabled()) PB_Debug.trace("scrape.js","> sandbox");
 
 	// first wrap the current browser window to make it secure
 	var safeWindow = new XPCNativeWrapper(browser.contentWindow); 
@@ -251,15 +252,12 @@ Scraper.executeScraperSandboxed = function(browser, scraper, model, logger, done
     
 		// now look to see if the scraper left any URLs to scrape
 		var toScrape = sandbox.piggybank.toScrape;
-        
+        	if (PB_Debug.enabled()) PB_Debug.print("scrape.js", toScrape);
 		// if so, execute the activities
 		if (toScrape.length > 0) {
-			var dialog = openDialog("chrome://piggy-bank/content/load-dom-dialog.xul", "_blank", "chrome,all,dialog=no", null, null, null);
+			var dialog = window;
     
 			var init = function() {
-				// allow the dialog to be cancelled
-				dialog.document.getElementById("cancel-button").addEventListener("command", function() { dialog.close(); }, false);
-
 				// load the list of URLs to subscrape that the scraper loaded
 				var list = dialog.document.getElementById("url-list");
 				for each (var s in toScrape) {
@@ -277,12 +275,11 @@ Scraper.executeScraperSandboxed = function(browser, scraper, model, logger, done
 						var onLoad = function() { // this is called when the iframe finished loading the URL to subscrape
 							var item = list.getItemAtIndex(processed);
 
-							var dom = dialog.document.getElementById("browser").contentDocument;
+							var dom = dialog.document.getElementById("browser-subscrape").contentDocument;
 
 							try {
 								sandbox.piggybank.toScrape = []; // the subscraper might want to subcrape too, so clean up the array
 								process(dom); // subscrape the loaded DOM
-								item.style.color = "green"; // if we get here we were successful
 								if (sandbox.piggybank.toScrape.length > 0) { // if the subscraper wants to subscrape further
 									for each (var s in sandbox.piggybank.toScrape) {
 										toScrape.push(s);
@@ -292,25 +289,23 @@ Scraper.executeScraperSandboxed = function(browser, scraper, model, logger, done
 								}
 							} catch (e) {
 								if (exception) exception(e); // handle the exception
-								item.style.color = "red"; // and signal visually that there was an error
 							}
 
 							processed++; // at this point another URL was processed
                             
 							// remove ourselves as the handler or we will get invoked again
-							dialog.document.getElementById("browser").removeEventListener("load", onLoad, true);
+							dialog.document.getElementById("browser-subscrape").removeEventListener("load", onLoad, true);
 
 							// call ourselves with an increased counter
 							subscrape(processed);
 						}
 
 						// this sets the function above as the loading handler
-						dialog.document.getElementById("browser").addEventListener("load", onLoad, true);
+						dialog.document.getElementById("browser-subscrape").addEventListener("load", onLoad, true);
 
 						// this will trigger the hidden browser to load the url
-						dialog.document.getElementById("browser").src = url;
+						dialog.document.getElementById("browser-subscrape").src = url;
 					} else {
-						setTimeout(function() { dialog.close() }, 100);
 						done();
 					}
 				};
@@ -319,8 +314,7 @@ Scraper.executeScraperSandboxed = function(browser, scraper, model, logger, done
 				subscrape(0);
 			};
 
-			// when the dialog is ready, initialize it
-			dialog.addEventListener("load", init, false);
+			init();
 		} else {
 			done();
         	}
