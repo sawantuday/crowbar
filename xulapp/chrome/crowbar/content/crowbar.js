@@ -26,6 +26,21 @@ WebProgressListener.prototype = {
 	onStateChange: function(webProgress, request, stateFlags, status) {
 		var WPL = Components.interfaces.nsIWebProgressListener;
 		dump(request.name + " " + stateFlags + "\n");
+
+		// this should always return; but it doesn't wait for the
+		// document to finish loading all subrequests, and it
+		// definitely doesn't allow for the onload actions to finish
+		//if (this._url == request.name) {
+		//	if (stateFlags & WPL.STATE_STOP) {
+		//		if (stateFlags & WPL.STATE_IS_REQUEST) {
+		//			this._done();
+		//		}
+		//	}
+		//}
+
+		// this is technically correct according to documentation,
+		// but not every page finishes these two phases?
+		// http://www.xulplanet.com/references/xpcomref/ifaces/nsIWebProgressListener.html
 		if (this._url == request.name) {
 			if (stateFlags & WPL.STATE_STOP) {
 				if (stateFlags & WPL.STATE_IS_DOCUMENT) {
