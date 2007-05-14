@@ -2,10 +2,14 @@
  * SIMILE Crowbar
  */
 
-function WebProgressListener() {}
+function WebProgressListener(url) {
+	this._url = url;
+}
 
 WebProgressListener.prototype = {
 	_done : null,
+
+	_stopOne : false,
 
 	setDone: function(done) {
 		this._done = done;
@@ -21,9 +25,14 @@ WebProgressListener.prototype = {
 
 	onStateChange: function(webProgress, request, stateFlags, status) {
 		var WPL = Components.interfaces.nsIWebProgressListener;
-		if (stateFlags & WPL.STATE_IS_NETWORK) {
+		dump(request.name + " " + stateFlags + "\n");
+		if (this._url == request.name) {
 			if (stateFlags & WPL.STATE_STOP) {
-				this._done();
+				if (stateFlags & WPL.STATE_IS_DOCUMENT) {
+					this._stopOne = true;
+				} else if (this._stopOne && (stateFlags & WPL.STATE_IS_WINDOW)) {
+					this._done();
+				}
 			}
 		}
 	},
@@ -68,6 +77,7 @@ SocketListener.prototype = {
 			},
 
 			onDataAvailable: function(request, context, inputStream, offset, count) {
+				dump("data available\n");
 				this.data = instream.read(count);
 			
 				if (this.data.match(/GET/)) {
@@ -97,6 +107,7 @@ SocketListener.prototype = {
 						} else {
 							var params = parsePOSTParams(this.data);
 						}
+						dump("parsed headers\n");
 			
 						if (!params.url) {
 							var body = body_header + getForm() + body_footer;
@@ -106,7 +117,7 @@ SocketListener.prototype = {
 							outstream.close();
 						} else {
 							if (params.url.match(/^https?\:\/\/.*$/)) {
-								var progessListener = new WebProgressListener();
+								var progessListener = new WebProgressListener(params.url);
 								var browser = document.getElementById("browser");
 								var page;
 			
@@ -117,8 +128,11 @@ SocketListener.prototype = {
 								} else {
 									var delay = default_delay;
 								}
+
+								dump("environment set, examining action\n");
 			
 								if (params.mode == "links") {
+									dump("links mode\n");
 									var process = function() {
 										var document = browser.contentDocument;
 										var code = "200";
@@ -136,6 +150,7 @@ SocketListener.prototype = {
 										return [ code, mime_type, page ];
 									};
 								} else if (params.mode == "scrape") {
+									dump("scraping mode\n");
 									var process = function() {
 										var code = "200";
 										var mime_type = "application/rdf+xml";
@@ -143,10 +158,11 @@ SocketListener.prototype = {
 										var document = browser.contentDocument;
 										var scraper = params.scraper;
 										if (scraper && scraper.match(/^http\:\/\/.*$/)) {
+											dump("scraping: " + scraper + "\n");
 											var results = Scraper.scrape(document, browser, scraper);
 											code = "200";
 											mime_type = "text/rdf+n3";
-											page = results.store.toNT();
+											page = results.store.toRDFXML();
 										} else {
 											code = "400";
 											mime_type = "text/html";
@@ -172,6 +188,7 @@ SocketListener.prototype = {
 									};
 								}
 								var respond = function() {
+									dump("starting response\n");
 									var page = process();
 									var response = "HTTP/1.0 " + page[0] + " OK\nContent-type: " + page[1] + "\n\n";
 									if (params.view && params.view == "browser") {
@@ -186,6 +203,7 @@ SocketListener.prototype = {
 								};
 								var done = function() {
 									// wait for the page to finish loading
+									dump("waiting for page load\n");
 									setTimeout(respond, delay);
 									// FIXME(SM): instead of using a delay, we should find a way to securely intercept
 									// when the page onload method returns before we start processing the page. This does not
@@ -195,6 +213,7 @@ SocketListener.prototype = {
 								};
 								progessListener.setDone(done);
 								browser.addProgressListener(progessListener, Components.interfaces.nsIWebProgress.NOTIFY_ALL);
+								dump("loading\n");
 								browser.loadURI(url, null, null);
 							} else {
 								var headers = "HTTP/1.0 Bad Request\nContent-type: text/html\n\n";
@@ -217,6 +236,7 @@ SocketListener.prototype = {
 
 		var pump = Components.classes["@mozilla.org/network/input-stream-pump;1"].createInstance(Components.interfaces.nsIInputStreamPump);
 		pump.init(stream, -1, -1, 0, 0, false);
+		dump("init\n");
 		pump.asyncRead(dataListener,null);
 	}
 };

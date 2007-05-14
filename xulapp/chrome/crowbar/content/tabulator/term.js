@@ -8,7 +8,7 @@
 // W3C open source licence 2005.
 //
 
-RDFTracking = 0  // Are we requiring reasons for statements?
+const RDFTracking = 0  // Are we requiring reasons for statements?
 
 //takes in an object and makes it an object if it's a literal
 function makeTerm(val) {
@@ -51,8 +51,8 @@ RDFSymbol.prototype.toNT = toNT
 //	Blank Node
 
 var RDFNextId = 0;  // Gobal genid
-RDFGenidPrefix = "genid:"
-NTAnonymousNodePrefix = "_:n"
+const RDFGenidPrefix = "genid:"
+const NTAnonymousNodePrefix = "_:n"
 
 function RDFBlankNode(id) {
     if (id)
@@ -146,6 +146,19 @@ function RDFStatement_toNT() {
 	    +  this.object.toNT() +" .")
 }
 
+function RDFStatement_toRDFXML(nsIndex, local) {
+    var ns = "ns" + nsIndex;
+    var qname = ns + ":" + local;
+    var pred = (this.object.uri) ?
+	"<" + qname + " rdf:resource='" + this.object.uri
+		+ "'/>\n" :
+	"<" + qname + ">" + this.object.value + "</"
+		+ qname + ">";
+
+    return "<rdf:Description rdf:about='" + this.subject.uri + "'>\n" +
+	pred + "</rdf:Description>\n";
+}
+
 function RDFStatement(subject, predicate, object, why) {
     this.subject = makeTerm(subject)
     this.predicate = makeTerm(predicate)
@@ -160,7 +173,8 @@ function RDFStatement(subject, predicate, object, why) {
 
 RDFStatement.prototype.toNT = RDFStatement_toNT
 RDFStatement.prototype.toString = RDFStatement_toNT
-	
+RDFStatement.prototype.toRDFXML = RDFStatement_toRDFXML
+
 
 //	Formula
 //
@@ -171,6 +185,8 @@ function RDFFormula() {
     this.constraints = []
     this.initBindings = []
     this.optional = []
+    this.prefixes = []
+    this.prefixLookup = [];
     return this
 }
 
@@ -183,7 +199,39 @@ function RDFFormula() {
 }*/
 
 function RDFFormula_toNT() {
-    return "{\n" + this.statements.join('\n') + "}"
+    return this.statements.join('\n')
+}
+
+function RDFFormula_toRDFXML() {
+    var rdf = "";
+    for each (var statement in this.statements) {
+	var delim = 0;
+	var pred = statement.predicate.uri;
+	if (pred.lastIndexOf('#') >= 0) {
+		delim = pred.lastIndexOf('#');
+	} else if (pred.lastIndexOf('/') >= 0) {
+		delim = pred.lastIndexOf('/');
+	}
+	var ns = pred.substring(0, delim+1);
+	var local = pred.substr(delim+1);
+	if (this.prefixLookup[ns]) {
+	        rdf += statement.toRDFXML(this.prefixLookup[ns], local);
+	} else {
+		this.prefixes.push(ns);
+        	this.prefixLookup[ns] = this.prefixes.length-1;
+	        rdf += statement.toRDFXML(this.prefixes.length-1, local);
+	}
+    }
+    rdf = "<rdf:RDF xmlns:rdf='http://www.w3.org/1999/02/22-rdf-syntax-ns#'" + nsKey(this.prefixes) + ">\n" + rdf + "</rdf:RDF>\n";
+    return rdf;
+}
+
+function nsKey(namespaces) {
+    var keys = "";
+    for (var i = 0; i < namespaces.length; i++) {
+        keys += " xmlns:ns" + i + "='" + namespaces[i] + "'";
+    }
+    return keys;
 }
 
 //RDFQueryFormula.prototype = new RDFFormula()
@@ -191,6 +239,7 @@ function RDFFormula_toNT() {
 RDFFormula.prototype.termType = 'formula'
 RDFFormula.prototype.toNT = RDFFormula_toNT
 RDFFormula.prototype.toString = RDFFormula_toNT   
+RDFFormula.prototype.toRDFXML = RDFFormula_toRDFXML
 
 RDFFormula.prototype.add = function(subj, pred, obj, why) {
     this.statements.push(new RDFStatement(subj, pred, obj, why))
