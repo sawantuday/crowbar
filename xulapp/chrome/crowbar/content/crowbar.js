@@ -33,13 +33,13 @@ SocketListener.prototype = {
             onDataAvailable: function(request, context, inputStream, offset, count) {
                 dump("data available\n");
                 this.data = instream.read(count);
-            
+
                 if (this.data.match(/GET/)) {
                     this.found_get++;
                 } else if (this.data.match(/POST/)) {
                     this.found_post++;
                 }
-            
+
                 if (this.data.match(/[\n\r]{2}/)) {
                     // these string fragments are horrible, we should think of using a sort of template system
                     var headers = "HTTP/1.0 200 OK\nContent-type: text/html\n\n";
@@ -54,15 +54,33 @@ SocketListener.prototype = {
                         "<link rel='stylesheet' type='text/css' href='http://simile.mit.edu/styles/default.css'/>" + 
                         "</head><body><div id='body'><h1>Crowbar</h1>";
                     var body_footer = "</div></body></html>\n";
-            
+
                     if (this.found_get || this.found_post) {
                         if (this.found_get) {
                             var params = parseGETParams(this.data);
                         } else {
-                            var params = parsePOSTParams(this.data);
+                            var paramsArray = parsePOSTParams(this.data);
+                            var params = paramsArray[0];
+                            var dataString = paramsArray[1];
+
+                            // POST method requests must wrap the encoded text in a MIME stream
+                            var Cc = Components.classes;
+                            var Ci = Components.interfaces;
+                            var stringStream = Cc["@mozilla.org/io/string-input-stream;1"].createInstance(Ci.nsIStringInputStream);
+                            if ("data" in stringStream) { // Gecko 1.9 or newer
+                                stringStream.data = dataString;
+                            } else {// 1.8 or older
+                                stringStream.setData(dataString, dataString.length);
+                            }
+
+                            var postData = Cc["@mozilla.org/network/mime-input-stream;1"].createInstance(Ci.nsIMIMEInputStream);
+                            postData.addHeader("Content-Type", "application/x-www-form-urlencoded");
+                            postData.addContentLength = true;
+                            postData.setData(stringStream);
+                            // postData is ready to be used as aPostData argument
                         }
                         dump("parsed headers\n");
-            
+
                         if (!params.url) {
                             var body = body_header + getForm() + body_footer;
                             var webpage = headers + body;
@@ -159,7 +177,7 @@ SocketListener.prototype = {
                                          jsdump("Error " + e);
                                     }
                                 };
-                                
+
                                 var loaded = function(wrappedContentWin){
                                     dump("DOM content loaded...\n");
                                     setTimeout(respond, delay);
@@ -173,7 +191,11 @@ SocketListener.prototype = {
 
                                 browser.addEventListener("DOMContentLoaded", loaded, false);
                                 dump("loading\n");
-                                browser.loadURI(url, null, null);
+                                if (this.found_post){
+                                    browser.webNavigation.loadURI(url, 0, null, postData, null); 
+                                } else {
+                                    browser.loadURI(url, null, null);
+                                }
                             } else {
                                 var headers = "HTTP/1.0 Bad Request\nContent-type: text/html\n\n";
                                 var response = headers + body_header + getForm() + "<h2>" + url + " is not a valid HTTP URL</h2>" + body_footer;
@@ -229,7 +251,7 @@ function parsePOSTParams(data) {
         var value = decodeURIComponent(param[1]);
         params[name] = value;
     }
-    return params;
+    return [params, payload];
 }
 
 function getForm(url, delay) {
