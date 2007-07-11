@@ -8,7 +8,7 @@
 // W3C open source licence 2005.
 //
 
-const RDFTracking = 0  // Are we requiring reasons for statements?
+var RDFTracking = 0  // Are we requiring reasons for statements?
 
 //takes in an object and makes it an object if it's a literal
 function makeTerm(val) {
@@ -17,9 +17,8 @@ function makeTerm(val) {
     if (typeof val == 'string') return new RDFLiteral(val);
     if (typeof val == 'undefined') return undefined;
     alert("Can't make term from " + val + " of type " + typeof val) // @@ add numbers
+    return null;
 }
-
-
 
 //	Symbol
 
@@ -51,8 +50,8 @@ RDFSymbol.prototype.toNT = toNT
 //	Blank Node
 
 var RDFNextId = 0;  // Gobal genid
-const RDFGenidPrefix = "genid:"
-const NTAnonymousNodePrefix = "_:n"
+var RDFGenidPrefix = "genid:"
+var NTAnonymousNodePrefix = "_:n"
 
 function RDFBlankNode(id) {
     if (id)
@@ -295,12 +294,13 @@ RDFFormula.prototype.fromNT = function(str) {
     var ch = str.slice(0,1)
     if (ch == '<') return this.sym(str.slice(1,len-1))
     if (ch == '_') {
-	var x = new RDFBlankNode()
-	x.id = parseInt(str.slice(3))
-	RDFNextId--
-	return x
+		var x = new RDFBlankNode()
+		x.id = parseInt(str.slice(3))
+		RDFNextId--
+		return x
     }
     alert("Can't yet convert from NT: '"+str+"', "+str[0])
+    return null;
 }
 
 // ends
