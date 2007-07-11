@@ -100,7 +100,6 @@ SocketListener.prototype = {
                                 } else {
                                     var delay = default_delay;
                                 }
-
                                 dump("environment set, examining action\n");
 
                                 if (params.mode == "links") {
@@ -120,6 +119,40 @@ SocketListener.prototype = {
                                             node = iterator.iterateNext();
                                         }
                                         return [ code, mime_type, page ];
+                                    };
+                                } else if (params.mode == "shoot") {
+                                    dump("shoot mode\n");
+                                    var process = function() {
+                                        var win = browser; 
+                                        var w = win.contentDocument.width;
+                                        var h = win.contentDocument.height; 
+                                
+                                        var canvas = document.getElementById("myCanvas");
+                                        canvas.style.display = "inline";
+                                        canvas.width = w;
+                                        canvas.height = h; 
+
+                                        var ctx = canvas.getContext("2d");
+                                        ctx.clearRect(0, 0, canvas.width, canvas.height);
+                                        ctx.save();
+                                        ctx.scale(1.0, 1.0); 
+                                        ctx.drawWindow(win.contentWindow, 0, 0, w, h, "rgb(255,255,255)");
+                                        ctx.restore();
+
+                                        try {
+                                            var url = canvas.toDataURL("image/png"); 
+                                            url = url.split(",")[1].base64decode();
+                                        } catch(ex) {
+                                            return alert("This feature requires XulRunner >= 1.8.1\n" + ex);
+                                        }
+                            
+                                        canvas.style.display = "none";
+                                        canvas.width = 1;
+                                        canvas.height = 1;
+                    
+                                        var code = "200";
+                                        var mime_type = "image/png";
+                                        return [ code, mime_type, url ];
                                     };
                                 } else if (params.mode == "scrape") {
                                     dump("scraping mode\n");

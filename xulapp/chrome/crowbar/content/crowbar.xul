@@ -21,15 +21,26 @@
   <script src="piggybank/scraping-utilities.js"/>
   <script src="piggybank/piggybank.js"/>
   <script src="scrape.js"/>
-
+  <script src="base64.js" />
   <script src="crowbar.js"/>
   <hbox>
     <textbox id="urlbar" value="" flex="1" onchange="go();"/>
   </hbox>
-  <browser flex="1" id="browser" src="" type="content-primary"/>
+  <browser flex="1" id="browser" src="" type="content-primary" width="1024" height="768"/>
 
   <vbox style="display: none;">
      <listbox id="url-list" flex="1" disabled="true" />
      <html:iframe id="browser-subscrape"/>
   </vbox>
+
+  <overlay id="myOverlay"
+         xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
+         xmlns:html="http://www.w3.org/1999/xhtml">
+    <statusbar id="status-bar">
+        <scrollbox width="1" height="1">
+            <html:canvas id="myCanvas" display="none" />
+        </scrollbox>
+    </statusbar>
+  </overlay>
+
 </window>
