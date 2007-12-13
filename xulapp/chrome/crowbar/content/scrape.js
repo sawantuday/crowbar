@@ -37,7 +37,11 @@ Scraper.scrape = function(doc, browser, scraper) {
 	var title = this._title;
 	var contentType = this._contentType;
 
-	var model = null;
+    var output = {
+        model:  null,
+        json:   {},
+        params: { outputFormat: "rdf/n3" }
+    }
 
 	// the 'loader' function is 'detached' and invoked every 'delay' milliseconds
 	// to check if the java-side loading has finished
@@ -50,7 +54,7 @@ Scraper.scrape = function(doc, browser, scraper) {
 			fetching = true;
 
 			// this is the triple store that is going to be filled by the screen scraper
-			model = PB_Extension.createWorkingModel();
+			output.model = PB_Extension.createWorkingModel();
 
 			// the function that will fetch the data into the model
 			var fetchData = function(url, type) {
@@ -68,18 +72,18 @@ Scraper.scrape = function(doc, browser, scraper) {
 					var type = xmlhttp.getResponseHeader('Content-Type').split(';')[0];
 					if (PB_Debug.enabled()) PB_Debug.trace("scrape.js","Response body: " + responseText);
 					if (type == RDF_XML_MIME_TYPE) {
-						var result = model.addRDFXML(responseText, url);
+						var result = output.model.addRDFXML(responseText, url);
 					} else if (type == RDF_N3_MIME_TYPE || type == RDF_TURTLE_MIME_TYPE || type == '') {
 						// NOTE: type '' is returned for file:/// URLs but this can happen here only for N3/turtle files
-						var result = model.addTurtle(responseText, url);
+						var result = output.model.addTurtle(responseText, url);
 					} else {
 						if (PB_Debug.enabled()) PB_Debug.trace("scrape.js","Type '" + type + "' not recognized, trying to guess it from the URL");
 						if (url.match(/^.*\.(rdf|rdfs|owl)([\?\#].*)?$/)) {
 							if (PB_Debug.enabled()) PB_Debug.trace("scrape.js","URL's extensions suggests RDF/XML");
-							var result = model.addRDFXML(responseText, url);
+							var result = output.model.addRDFXML(responseText, url);
 						} else if (url.match(/^.*\.(turtle|n3)([\?\#].*)?$/)) {
 							if (PB_Debug.enabled()) PB_Debug.trace("scrape.js","URL's extensions suggests RDF/N3 or RDF/Turtle");
-							var result = model.addTurtle(responseText, url);
+							var result = output.model.addTurtle(responseText, url);
 						} else {
 							if (PB_Debug.enabled()) PB_Debug.trace("scrape.js","URL '" + url + "' doesn't end with extensions we recognize, so aborting");
 						}
@@ -101,10 +105,10 @@ Scraper.scrape = function(doc, browser, scraper) {
 						fetched++;
 						if (url.match(/^file:\/.*\.(rdf|rdfs|owl)$/)) {
 							if (PB_Debug.enabled()) PB_Debug.trace("scrape.js","File's extensions suggests RDF/XML");
-							var result = model.addRDFXML(str, url);
+							var result = output.model.addRDFXML(str, url);
 						} else { // default to Turtle
 							if (PB_Debug.enabled()) PB_Debug.trace("scrape.js","Trying RDF/N3 or RDF/Turtle as default");
-							model.addTurtle(str, url);
+							output.model.addTurtle(str, url);
 						}
 						successfullyFetched++;
 					} catch (e) {
@@ -124,7 +128,7 @@ Scraper.scrape = function(doc, browser, scraper) {
 				// need to wait for the user to click on the data coin
 				if (PiggyBank.isRDFXML(contentType)) {
 					var serializer = new XMLSerializer();
-					model.addRDFXML(serializer.serializeToString(doc), url);
+					output.model.addRDFXML(serializer.serializeToString(doc), url);
 				}
                 
 				// if the page contains an HTML DOM, look for <link rel="alternate"> tags
@@ -154,7 +158,7 @@ Scraper.scrape = function(doc, browser, scraper) {
 			if (PB_Debug.enabled()) PB_Debug.trace("scrape.js","< Scraper.fetching");
 		}
         
-		if (model) {
+		if (output.model) {
 			if (doc && scraper && !scraping) { // if there are scrapers and we are not already scraping
 				scraping = true; // indicate that we started scraping, so that we aren't called again
                 
@@ -168,7 +172,7 @@ Scraper.scrape = function(doc, browser, scraper) {
 								Scraper.executeScraperSandboxed(
 									browser,
 									code,
-									model,
+									output,
 									PB_Debug.print,
 									function() { continuation(continuation, i+1); },
 									scraper,
@@ -216,10 +220,10 @@ Scraper.scrape = function(doc, browser, scraper) {
 		if (PB_Debug.enabled()) PB_Debug.trace("scrape.js","< Scraper.loader");
 	};
 	loader(); // invoke the loader
-	return model;
+	return output;
 }
 
-Scraper.executeScraperSandboxed = function(browser, scraper, model, logger, done, scraperURI, originURI, originTitle) {
+Scraper.executeScraperSandboxed = function(browser, scraper, output, logger, done, scraperURI, originURI, originTitle) {
 	if (PB_Debug.enabled()) PB_Debug.trace("scrape.js","> sandbox");
 
 	// first wrap the current browser window to make it secure
@@ -238,6 +242,8 @@ Scraper.executeScraperSandboxed = function(browser, scraper, model, logger, done
 	// function so that we don't care if they get modified
 	sandbox.log = logger;
 	sandbox.data = new PB_Data(); 
+	sandbox.json = output.json;
+	sandbox.outputParams = output.params;
 	sandbox.utilities = new PB_ScrapingUtilities();
 	sandbox.piggybank = new PB_PiggyBankInterface();
         
@@ -393,22 +399,22 @@ Scraper.executeScraperSandboxed = function(browser, scraper, model, logger, done
 	// the java sandbox.
 	var load = function(done) {
 		for each (var s in sandbox.data.statements) {
-			model.addStatement(s[0],s[1],s[2],s[3]);
+			output.model.addStatement(s[0],s[1],s[2],s[3]);
 			if (scraperURI || originURI || originTitle) {
 				scraperURI = scraperURI ? scraperURI : "";
 				originURI = originURI ? originURI : "";
 				originTitle = originTitle ? originTitle : "";
-				model.addBacktracking(s[0], scraperURI, originURI, originTitle);
+				output.model.addBacktracking(s[0], scraperURI, originURI, originTitle);
 			}
 		}
 		for each (var s in sandbox.data.tags) {
-			model.addTag(s[0],s[1]);
+			output.model.addTag(s[0],s[1]);
 		}
 		for each (var s in sandbox.data.rdfxml) {
-			model.addRDFXML(s[0],s[1]);
+			output.model.addRDFXML(s[0],s[1]);
 		}
 		for each (var s in sandbox.data.turtle) {
-			model.addTurtle(s[0],s[1]);
+			output.model.addTurtle(s[0],s[1]);
 		}
 		done();
 	}

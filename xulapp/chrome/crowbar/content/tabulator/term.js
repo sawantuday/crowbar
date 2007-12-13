@@ -247,7 +247,8 @@ RDFFormula.prototype.add = function(subj, pred, obj, why) {
 // Convenience methods on a formula allow the creation of new RDF terms:
 
 RDFFormula.prototype.sym = function(uri) {
-    return new RDFSymbol(uri)
+    // dfhuynh: only wrap strings
+    return (typeof uri == "string") ? new RDFSymbol(uri) : uri;
 }
 
 RDFFormula.prototype.literal = function(val, lang, dt) {
@@ -278,8 +279,10 @@ RDFFormula.prototype.collection = function () {
 
 
 // The namespace function generator 
+// dfhuynh: changed Namespace to RDFNamespace or otherwise we'll get
+//   Error: redeclaration of const Namespace
 
-function Namespace(nsuri) {
+function RDFNamespace(nsuri) {
     return function(ln) { return new RDFSymbol(nsuri+ln) }
 }
 

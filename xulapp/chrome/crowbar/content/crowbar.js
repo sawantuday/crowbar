@@ -162,12 +162,23 @@ SocketListener.prototype = {
                                         var page = "";
                                         var document = browser.contentDocument;
                                         var scraper = params.scraper;
-                                        if (scraper && scraper.match(/^http\:\/\/.*$/)) {
+                                        if (scraper && (scraper.match(/^http\:\/\/.*$/) || scraper.match(/^file\:\/\/.*$/))) {
                                             dump("scraping: " + scraper + "\n");
                                             var results = Scraper.scrape(document, browser, scraper);
                                             code = "200";
-                                            mime_type = "text/rdf+n3";
-                                            page = results.store.toRDFXML();
+                                            if (results.params.outputFormat == "json") {
+                                                mime_type = "application/json";
+                                                
+                                                var jsonOutputMode = ("jsonOutputMode" in results.params) ? results.params.jsonOutputMode : "relax";
+                                                if (jsonOutputMode == "relax") {
+                                                    page = jsonize(results.json);
+                                                } else {
+                                                    page = jsonize(results.json, { breakLines: false });
+                                                }
+                                            } else {
+                                                mime_type = "text/rdf+n3";
+                                                page = results.model.store.toRDFXML();
+                                            }
                                         } else {
                                             code = "400";
                                             mime_type = "text/html";

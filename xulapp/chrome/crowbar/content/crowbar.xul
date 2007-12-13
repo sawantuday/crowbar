@@ -15,6 +15,7 @@
   <script src="piggybank/utilities/http.js"/>
 
   <script src="store.js"/>
+  <script src="jsonize.js"/>
   <script src="extension.js"/>
   <script src="piggybank/data.js"/>
   <script src="piggybank/piggybank-interface.js"/>
