@@ -223,6 +223,8 @@ SocketListener.prototype = {
                                 };
 
                                 var loaded = function(wrappedContentWin){
+                                    browser.removeEventListener("DOMContentLoaded", arguments.callee, false);
+                                    
                                     dump("DOM content loaded...\n");
                                     setTimeout(respond, delay);
                                     // NOTE(SM): instead of scraping right away, we introduce an optional delay

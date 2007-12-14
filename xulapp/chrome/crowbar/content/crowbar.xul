@@ -4,7 +4,7 @@
 
 <!DOCTYPE window SYSTEM "chrome://crowbar/locale/crowbar.dtd">
 
-<window id="crowbar" title="&crowbar.title;" xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"  xmlns:html="http://www.w3.org/1999/xhtml">
+<window id="crowbar" title="&crowbar.title;" width="600" height="400" xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"  xmlns:html="http://www.w3.org/1999/xhtml">
   <script src="tabulator/uri.js"/>
   <script src="tabulator/term.js"/>
   <script src="tabulator/rdfparser.js"/>
@@ -24,7 +24,7 @@
   <script src="scrape.js"/>
   <script src="base64.js" />
   <script src="crowbar.js"/>
-  <hbox>
+  <hbox flex="0.5">
     <textbox id="urlbar" value="" flex="1" onchange="go();"/>
   </hbox>
   <browser flex="1" id="browser" src="" type="content-primary" width="1024" height="768"/>
