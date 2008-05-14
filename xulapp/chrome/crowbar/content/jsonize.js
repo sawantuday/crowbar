@@ -8,12 +8,11 @@ var javascriptEscapeCharacters = {
     '\n': '\\n',
     '\f': '\\f',
     '\r': '\\r',
-    '"' : '\\"',
-    '\'': '\\\'',
     '\\': '\\\\'
 };
 
 function encodeJavascriptString(x) {
+    x = x.replace(/'/g, "\\'").replace(/"/g, "\\\"");
     if (/["\\\x00-\x1f]/.test(x)) {
         return x.replace(/([\x00-\x1f\\"])/g, function(a, b) {
             var c = javascriptEscapeCharacters[b];
