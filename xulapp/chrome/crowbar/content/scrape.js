@@ -1,6 +1,6 @@
 var Scraper = {};
 
-Scraper.scrape = function(doc, browser, scraper) {
+Scraper.scrape = function(doc, browser, scraper, silent) {
 	var url = doc.location.href;
 	if (url.indexOf("http://127.0.0.1") < 0) {
 		this._url = url;
@@ -16,6 +16,7 @@ Scraper.scrape = function(doc, browser, scraper) {
 	}
 
 	var canProcess = false;
+    var alert2 = silent ? function() {} : function(s) { alert(s); };
 
 	if (doc.location) {
 		canProcess = (url.match(/^(https?|file|chrome)\:\/\/.*$/) && url.indexOf("http://127.0.0.1") < 0);
@@ -61,7 +62,7 @@ Scraper.scrape = function(doc, browser, scraper) {
 				var onStatus = function(status, statusText, xmlhttp) {
 					if (PB_Debug.enabled()) PB_Debug.trace("scrape.js","> Scraper.fetchData.onStatus(" + url + ")");
 					if (status != 0) {
-						alert("Fetching " + url + " return status '" + statusText + "' (" + status + ")");
+                        alert2("Fetching " + url + " return status '" + statusText + "' (" + status + ")");
 					}
 					if (PB_Debug.enabled()) PB_Debug.trace("scrape.js","< Scraper.fetchData.onStatus(" + url + ")");
 				};
@@ -89,7 +90,7 @@ Scraper.scrape = function(doc, browser, scraper) {
 						}
 					}
 					if (result && result != "") {
-						alert("Loading the data from " + url + " failed because: " + result);
+                        alert2("Loading the data from " + url + " failed because: " + result);
 					} else {
 						successfullyFetched++;
 					}
@@ -112,7 +113,7 @@ Scraper.scrape = function(doc, browser, scraper) {
 						}
 						successfullyFetched++;
 					} catch (e) {
-						alert("scrape.js","Error Loading '" + url + "': " + e);
+                        alert2("scrape.js","Error Loading '" + url + "': " + e);
 					}
 				} else {
 					PB_HTTPUtilities.doGet(url, onStatus, onDone, type);
@@ -181,11 +182,11 @@ Scraper.scrape = function(doc, browser, scraper) {
 								);
 							} else { // there was some error retriving the scraping code
 								if (code == "") {
-									alert("Error retrieving the scraper at " + scraper);
+									alert2("Error retrieving the scraper at " + scraper);
 								}
 							}
 						} catch (e) {
-							window.alert("Failed to extract data using screen scraper " + scraper + "\nError: " + e);
+							alert2("Failed to extract data using screen scraper " + scraper + "\nError: " + e);
 						}
 					} else 
 						doneScraping = true;
@@ -211,7 +212,7 @@ Scraper.scrape = function(doc, browser, scraper) {
 				// we finished with errors
 				if (!finished) {
 					// scraping took too long and we timed out
-					alert("Collecting the data took too long, stopping it."); // tell the user about it
+					alert2("Collecting the data took too long, stopping it."); // tell the user about it
 				}
 				// if not a timeout, avoid telling the user again since we told already/
 			}
@@ -246,7 +247,10 @@ Scraper.executeScraperSandboxed = function(browser, scraper, output, logger, don
 	sandbox.outputParams = output.params;
 	sandbox.utilities = new PB_ScrapingUtilities();
 	sandbox.piggybank = new PB_PiggyBankInterface();
-        
+    
+    // this is so that the scraper can access window.x where x is added by the web page
+    sandbox.getWindowObject = function(name) { return safeWindow.wrappedJSObject[name]; };
+    
 	// finally, we need to set the safe window as the sandbox prototype    
 	sandbox.__proto__ = safeWindow;
     

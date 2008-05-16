@@ -54,7 +54,7 @@ SocketListener.prototype = {
                         "<link rel='stylesheet' type='text/css' href='http://simile.mit.edu/styles/default.css'/>" + 
                         "</head><body><div id='body'><h1>Crowbar</h1>";
                     var body_footer = "</div></body></html>\n";
-
+                    
                     if (this.found_get || this.found_post) {
                         if (this.found_get) {
                             var params = parseGETParams(this.data);
@@ -94,7 +94,13 @@ SocketListener.prototype = {
                                 var url = params.url;
                                 var urlbar = document.getElementById("urlbar");
                                 urlbar.value = url;
-
+                                
+                                if (params.silent) {
+                                    var silent = (params.silent.toLowerCase() == "true");
+                                } else {
+                                    var silent = false;
+                                }
+                                
                                 if (params.delay) {
                                     var delay = params.delay;
                                 } else {
@@ -164,7 +170,8 @@ SocketListener.prototype = {
                                         var scraper = params.scraper;
                                         if (scraper && (scraper.match(/^http\:\/\/.*$/) || scraper.match(/^file\:\/\/.*$/))) {
                                             dump("scraping: " + scraper + "\n");
-                                            var results = Scraper.scrape(document, browser, scraper);
+                                            var results = Scraper.scrape(document, browser, scraper, silent);
+                                            
                                             code = "200";
                                             if (results.params.outputFormat == "json") {
                                                 mime_type = "application/json";
@@ -234,8 +241,41 @@ SocketListener.prototype = {
                                     // guarantee that such content will have finished loading, it's better than
                                     // nothing. 
                                 };
-
+                                
                                 browser.addEventListener("DOMContentLoaded", loaded, false);
+                                /*if (silent) {
+                                    var autoConfirm = ("autoConfirm" in params) ? (params.autoConfirm.toLowerCase() == "true") : false;
+                                
+                                    var listener = {
+                                        onLocationChange : function(webProgress, request, location) {},
+                                        onProgressChange : function(webProgress, request, curSelfProgress, maxSelfProgress, curTotalProgress, maxTotalProgress) {},
+                                        onSecurityChange : function(webProgress, request, state) {},
+                                        //onStateChange : function(webProgress, request, stateFlags, status) {},
+                                        onStatusChange : function(webProgress, request, status, message) {},
+                                        QueryInterface : function(iid) {
+                                            if (!iid.equals(Components.interfaces.nsIWebProgressListener) &&
+                                                !iid.equals(Components.interfaces.nsISupportsWeakReference) &&
+                                                !iid.equals(Components.interfaces.nsISupports)) {
+                                                throw Components.results.NS_ERROR_NO_INTERFACE;
+                                            }
+                                            return this;
+                                        }
+                                    };
+                                    listener.onStateChange = function(webProgress, request, stateFlags, status) {
+                                        if (stateFlags & Components.interfaces.nsIWebProgressListener.STATE_TRANSFERRING) {
+                                            browser.removeProgressListener(listener);alert("here");
+                                            
+                                            // Can we do something to override window.alert and window.confirm here?
+                                            //browser.contentWindow.top.eval("(function() { var f = window.alert; window.alert = function(s) { f('Silent alert: ' + s); }; })()");
+                                            //browser.contentWindow.top.alert = function(s) { window.alert('silent: ' + s); };
+                                        }
+                                    };
+                                    browser.addProgressListener(
+                                        listener, 
+                                        Components.interfaces.nsIWebProgress.NOTIFY_STATE_DOCUMENT
+                                    );
+                                }*/
+                                
                                 dump("loading\n");
                                 if (this.found_post){
                                     browser.webNavigation.loadURI(url, 0, null, postData, null); 
