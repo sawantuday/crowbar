@@ -23,6 +23,7 @@
   <script src="piggybank/piggybank.js"/>
   <script src="scrape.js"/>
   <script src="base64.js" />
+  <script src="css-util.js"/>
   <script src="crowbar.js"/>
   <hbox flex="0.5">
     <textbox id="urlbar" value="" flex="1" onchange="go();"/>

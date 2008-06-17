@@ -207,47 +207,49 @@ jsonize.converters = {
             var count = 0;
             var maxFieldLength = 0;
             var fieldNameEncoder = context.getRootProperty("fieldNameEncoder");
-            for (var n in x) {
-                if (x.hasOwnProperty(n)) {
-                    count++;
-                    maxFieldLength = Math.max(maxFieldLength, fieldNameEncoder.encode(n).length);
-                }
+			if (x.hasOwnProperty) {
+	            for (var n in x) {
+	                if (x.hasOwnProperty(n)) {
+	                    count++;
+	                    maxFieldLength = Math.max(maxFieldLength, fieldNameEncoder.encode(n).length);
+	                }
+	            }
+	            for (var n in x) {
+	                if (x.hasOwnProperty(n)) {
+	                    var v = x[n];
+	                    var f = jsonize.converters[typeof v];
+	                    var n2 = fieldNameEncoder.encode(n);
+	                    if (breakLines) {
+	                        writer.appendIndent();
+	                    }
+	                    
+	                    writer.append(n2);
+	                    writer.append(": ");
+	                    
+	                    if (breakLines && alignFieldValues) {
+	                        for (var q = n2.length; q < maxFieldLength; q++) {
+	                            writer.append(" ");
+	                        }
+	                    }
+	                    
+	                    path.unshift({ field: n });
+	                    f(v, contextualize(context, path), writer);
+	                    path.shift();
+	                    
+	                    count--;
+	                    if (count > 0) {
+	                        writer.append(',');
+	                    }
+	                    
+	                    if (breakLines) {
+	                        writer.appendLineBreak();
+	                    } else {
+	                        writer.append(" ");
+	                    }
+	                }
+	            }
             }
-            for (var n in x) {
-                if (x.hasOwnProperty(n)) {
-                    var v = x[n];
-                    var f = jsonize.converters[typeof v];
-                    var n2 = fieldNameEncoder.encode(n);
-                    if (breakLines) {
-                        writer.appendIndent();
-                    }
-                    
-                    writer.append(n2);
-                    writer.append(": ");
-                    
-                    if (breakLines && alignFieldValues) {
-                        for (var q = n2.length; q < maxFieldLength; q++) {
-                            writer.append(" ");
-                        }
-                    }
-                    
-                    path.unshift({ field: n });
-                    f(v, contextualize(context, path), writer);
-                    path.shift();
-                    
-                    count--;
-                    if (count > 0) {
-                        writer.append(',');
-                    }
-                    
-                    if (breakLines) {
-                        writer.appendLineBreak();
-                    } else {
-                        writer.append(" ");
-                    }
-                }
-            }
-            
+			
             if (breakLines) {
                 writer.unindent();
                 writer.appendIndent();

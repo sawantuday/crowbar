@@ -247,6 +247,7 @@ Scraper.executeScraperSandboxed = function(browser, scraper, output, logger, don
 	sandbox.outputParams = output.params;
 	sandbox.utilities = new PB_ScrapingUtilities();
 	sandbox.piggybank = new PB_PiggyBankInterface();
+	sandbox.cssUtil = CSSUtil;
     
     // this is so that the scraper can access window.x where x is added by the web page
     sandbox.getWindowObject = function(name) { return safeWindow.wrappedJSObject[name]; };
